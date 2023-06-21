@@ -48,8 +48,146 @@ rails g devise User
       insert    app/models/user.rb
        route  devise_for :users
 ===============================================================================
+rails db:migrate
+== 20230618194515 DeviseCreateUsers: migrating ================================
+-- create_table(:users)
+   -> 0.0012s
+-- add_index(:users, :email, {:unique=>true})
+   -> 0.0006s
+-- add_index(:users, :reset_password_token, {:unique=>true})
+   -> 0.0006s
+== 20230618194515 DeviseCreateUsers: migrated (0.0025s) =======================
+
 ===============================================================================
+rails g devise:views:locale en
 ===============================================================================
+ADD HEROKU MAILING FUNCTIONALITY - TWILIO SENDGRID
+
+https://docs.sendgrid.com/for-developers/sending-email/rubyonrails
+https://elements.heroku.com/addons/sendgrid
+https://app.sendgrid.com/settings/api_keys
+
 ===============================================================================
+j3@JAYTHREE:~/Documents/ror/heroku/photo-blog-app$ heroku addons:create sendgrid:starter
+Creating sendgrid:starter on ⬢ j3-photo-blog-app... free
+Your add-on is being provisioned. It will be available shortly.
+sendgrid-reticulated-39819 is being created in the background. The app will restart when complete...
+Use heroku addons:info sendgrid-reticulated-39819 to check creation progress
+Use heroku addons:docs sendgrid to view documentation
+j3@JAYTHREE:~/Documents/ror/heroku/photo-blog-app$ 
+
+heroku config:set SENDGRID_USERNAME=apikey
+heroku config:set SENDGRID_PASSWORD=SG.****
+
+===============================================================================
+GO TO UBUNTU - BASH:
+
+nano /home/j3/bashrc
+export SENDGRID_USERNAME= "apikey"
+export SENDGRID_PASSWORD="SG.***"  
+===============================================================================
+GO TO config/environment.rb:
+
+ActionMailer::Base.smtp_settings = {
+    :user_name => ENV['SENDGRID_USERNAME'], # This is the string literal 'apikey', NOT the ID of your API key
+    :password => ENV['SENDGRID_PASSWORD'], # This is the secret sendgrid API key which was issued during API key creation
+    :domain => 'heroku.com',
+    :address => 'smtp.sendgrid.net',
+    :port => 587,
+    :authentication => :plain,
+    :enable_starttls_auto => true
+  }
+===============================================================================
+GO TO config/development.rb
+
+  # Set MALIER with Twilio SendGrid
+  config.action_mailer.delivery_method = :test
+  config.action_mailer.default_url_options = { :host => 'http://localhost:3000'}
+
+===============================================================================
+GO TO config/production.rb
+
+# Set MALIER with Twilio SendGrid
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.default_url_options = { :host => 'j3-photo-blog-app-1b7089b46bb7.herokuapp.com', :protocol => 'https'}
+===============================================================================
+GO TO: localhost:3000/users/sign_up
+
+Started GET "/users/sign_up" for 127.0.0.1 at 2023-06-21 12:46:51 -0400
+Processing by Devise::RegistrationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 2.0ms | Allocations: 1097)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 13.1ms | Allocations: 7706)
+  Rendered layouts/_navigation.html.erb (Duration: 0.0ms | Allocations: 9)
+  Rendered layout layouts/application.html.erb (Duration: 14.4ms | Allocations: 8218)
+Completed 200 OK in 62ms (Views: 16.7ms | ActiveRecord: 0.6ms | Allocations: 29736)
+
+
+Started POST "/users" for 127.0.0.1 at 2023-06-21 12:47:14 -0400
+Processing by Devise::RegistrationsController#create as TURBO_STREAM
+  Parameters: {"authenticity_token"=>"[FILTERED]", "user"=>{"email"=>"giljr.2009@gmail.com", "password"=>"[FILTERED]", "password_confirmation"=>"[FILTERED]"}, "commit"=>"Sign up"}
+  TRANSACTION (0.0ms)  begin transaction
+  User Exists? (0.1ms)  SELECT 1 AS one FROM "users" WHERE "users"."email" = ? LIMIT ?  [["email", "giljr.2009@gmail.com"], ["LIMIT", 1]]
+  TRANSACTION (0.0ms)  rollback transaction
+  Rendering layout layouts/application.html.erb
+  Rendering devise/registrations/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.3ms | Allocations: 187)
+  Rendered devise/registrations/new.html.erb within layouts/application (Duration: 2.2ms | Allocations: 2306)
+  Rendered layouts/_navigation.html.erb (Duration: 0.0ms | Allocations: 9)
+  Rendered layout layouts/application.html.erb (Duration: 2.9ms | Allocations: 2799)
+Completed 422 Unprocessable Entity in 208ms (Views: 3.3ms | ActiveRecord: 0.2ms | Allocations: 12930)
+
+
+Started GET "/users/confirmation/new" for 127.0.0.1 at 2023-06-21 12:47:22 -0400
+Processing by Devise::ConfirmationsController#new as HTML
+  Rendering layout layouts/application.html.erb
+  Rendering devise/confirmations/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 1.1ms | Allocations: 581)
+  Rendered devise/confirmations/new.html.erb within layouts/application (Duration: 5.5ms | Allocations: 2177)
+  Rendered layouts/_navigation.html.erb (Duration: 0.0ms | Allocations: 9)
+  Rendered layout layouts/application.html.erb (Duration: 6.4ms | Allocations: 2691)
+Completed 200 OK in 8ms (Views: 7.7ms | ActiveRecord: 0.0ms | Allocations: 3901)
+
+
+Started POST "/users/confirmation" for 127.0.0.1 at 2023-06-21 12:47:29 -0400
+Processing by Devise::ConfirmationsController#create as TURBO_STREAM
+  Parameters: {"authenticity_token"=>"[FILTERED]", "user"=>{"email"=>"giljr.2009@gmail.com"}, "commit"=>"Resend confirmation instructions"}
+  User Load (0.3ms)  SELECT "users".* FROM "users" WHERE "users"."unconfirmed_email" = ? ORDER BY "users"."id" ASC LIMIT ?  [["unconfirmed_email", "giljr.2009@gmail.com"], ["LIMIT", 1]]
+  User Load (0.2ms)  SELECT "users".* FROM "users" WHERE "users"."email" = ? ORDER BY "users"."id" ASC LIMIT ?  [["email", "giljr.2009@gmail.com"], ["LIMIT", 1]]
+  Rendering /home/j3/.asdf/installs/ruby/3.0.2/lib/ruby/gems/3.0.0/gems/devise-4.9.2/app/views/devise/mailer/confirmation_instructions.html.erb
+  Rendered /home/j3/.asdf/installs/ruby/3.0.2/lib/ruby/gems/3.0.0/gems/devise-4.9.2/app/views/devise/mailer/confirmation_instructions.html.erb (Duration: 1.1ms | Allocations: 513)
+Devise::Mailer#confirmation_instructions: processed outbound mail in 7.2ms
+Delivered mail 649329a118336_6d2842cc4943b@JAYTHREE.mail (7.5ms)
+Date: Wed, 21 Jun 2023 12:47:29 -0400
+From: please-change-me-at-config-initializers-devise@example.com
+Reply-To: please-change-me-at-config-initializers-devise@example.com
+To: giljr.2009@gmail.com
+Message-ID: <649329a118336_6d2842cc4943b@JAYTHREE.mail>
+Subject: Confirmation instructions
+Mime-Version: 1.0
+Content-Type: text/html;
+ charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+<p>Welcome giljr.2009@gmail.com!</p>
+
+<p>You can confirm your account email through the link below:</p>
+
+<p><a href="http://localhost:3000/users/confirmation?confirmation_token=py7ssMJZs5QEcMPCGxHV">Confirm my account</a></p>
+
+Redirected to http://127.0.0.1:3000/users/sign_in
+Completed 303 See Other in 56ms (ActiveRecord: 0.5ms | Allocations: 50153)
+
+
+Started GET "/users/sign_in" for 127.0.0.1 at 2023-06-21 12:47:29 -0400
+Processing by Devise::SessionsController#new as TURBO_STREAM
+  Rendering layout layouts/application.html.erb
+  Rendering devise/sessions/new.html.erb within layouts/application
+  Rendered devise/shared/_links.html.erb (Duration: 0.7ms | Allocations: 276)
+  Rendered devise/sessions/new.html.erb within layouts/application (Duration: 5.0ms | Allocations: 2678)
+  Rendered layouts/_navigation.html.erb (Duration: 0.0ms | Allocations: 9)
+  Rendered layout layouts/application.html.erb (Duration: 6.1ms | Allocations: 3181)
+Completed 200 OK in 8ms (Views: 7.7ms | ActiveRecord: 0.0ms | Allocations: 4858)
 ===============================================================================
 ===============================================================================
