@@ -32,7 +32,7 @@
         </li>
         <% if !current_user %>
           <li class = "nav-item">
-            <%= button_to("Sign In", user_session_path, class: "btn btn-xs btn-info" ,  method: :post ) %>
+            <%= button_to("Sign In", user_session_path, class: "btn btn-outline-success" ,  method: :post ) %>
           </li>
         <% else %>
           <li class = "nav-item">
